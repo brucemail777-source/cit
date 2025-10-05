@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Universal Citation Generator</title>
+  <style>
+    :root { --bg:#0b0c10; --card:#121318; --ink:#e8e8ea; --muted:#9aa0a6; --accent:#6aa1ff; }
+    html,body{height:100%;}
+    body{margin:0; font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto; background:linear-gradient(180deg,#0b0c10,#0f1117 25%,#0b0c10); color:var(--ink);} 
+    .wrap{max-width:900px; margin:40px auto; padding:0 16px;}
+    .card{background:var(--card); border:1px solid #1f2330; border-radius:14px; padding:20px; box-shadow:0 10px 20px rgba(0,0,0,.25);} 
+    h1{font-size:24px; margin:0 0 6px}
+    p.sub{color:var(--muted); margin:0 0 18px}
+    .row{display:flex; gap:12px; flex-wrap:wrap}
+    input[type=text], select{flex:1; min-width:260px; padding:14px 12px; border-radius:12px; border:1px solid #2a3042; background:#0e1016; color:var(--ink); outline:none}
+    select{max-width:160px;}
+    button{padding:12px 16px; border-radius:12px; border:1px solid #2a3042; background:#11131a; color:var(--ink); cursor:pointer}
+    button.primary{background:var(--accent); border-color:transparent; color:#0a0b0f; font-weight:600}
+    .hint{color:var(--muted); font-size:13px; margin-top:8px}
+    .out{margin-top:18px; display:grid; gap:12px}
+    .mono{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;}
+    .ref{background:#0e1016; border:1px solid #23283b; border-radius:12px; padding:14px}
+    .badge{display:inline-block; padding:4px 8px; border-radius:999px; background:#0d1324; border:1px solid #2a3042; color:#9fc0ff; font-size:12px}
+    .grid2{display:grid; grid-template-columns:1fr auto; gap:8px; align-items:start}
+    textarea{width:100%; min-height:100px; padding:12px; border-radius:12px; border:1px solid #2a3042; background:#0e1016; color:var(--ink);}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="card">
+      <h1>Citation Generator</h1>
+      <p class="sub">Gib DOI, ISBN, URL oder Key=Value-Daten ein. Wähle das Zitierformat.</p>
+      <div class="row">
+        <input id="q" type="text" placeholder="Beispiel: 10.1038/nphys1170 oder author=Smith; title=..." />
+        <select id="style">
+          <option value="harvard">Harvard</option>
+          <option value="apa7">APA 7th</option>
+          <option value="mla">MLA</option>
+          <option value="chicago">Chicago</option>
+        </select>
+        <button class="primary" id="go">Generieren</button>
+      </div>
+      <div class="out" id="out"></div>
+    </div>
+  </div>
+
+  <script>
+    const $ = sel => document.querySelector(sel);
+    const out = $('#out');
+
+    function formatAuthors(list){
+      if(!list || !list.length) return '';
+      return list.join(', ');
+    }
+
+    function yearOrND(y){ return y? y : 'n.d.'; }
+
+    function citeHarvard(d){
+      return `${formatAuthors(d.authors)} (${yearOrND(d.year)}). ${d.title}. ${d.source || ''}`;
+    }
+
+    function citeAPA(d){
+      return `${formatAuthors(d.authors)} (${yearOrND(d.year)}). ${d.title}. *${d.source || ''}*. ${d.url || ''}`;
+    }
+
+    function citeMLA(d){
+      return `${formatAuthors(d.authors)}. "${d.title}." ${d.source || ''}, ${yearOrND(d.year)}, ${d.url || ''}.`;
+    }
+
+    function citeChicago(d){
+      return `${formatAuthors(d.authors)}. "${d.title}." ${d.source || ''}, ${yearOrND(d.year)}. ${d.url || ''}`;
+    }
+
+    function renderCitation(meta){
+      const style = $('#style').value;
+      let ref = '';
+      if(style==='apa7') ref = citeAPA(meta);
+      else if(style==='mla') ref = citeMLA(meta);
+      else if(style==='chicago') ref = citeChicago(meta);
+      else ref = citeHarvard(meta);
+      out.innerHTML = `<div class='ref'>${ref}</div>`;
+    }
+
+    $('#go').addEventListener('click',()=>{
+      const val=$('#q').value.trim();
+      if(!val) return;
+      const meta={authors:['Beispiel, A.'], year:'2024', title:val, source:'Beispielquelle', url:'https://example.com'};
+      renderCitation(meta);
+    });
+  </script>
+</body>
+</html>
